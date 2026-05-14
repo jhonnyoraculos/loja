@@ -1016,26 +1016,135 @@ def apply_styles() -> None:
         }
         .st-key-cart-fab-shell .stButton {
           position: fixed;
-          right: 1.25rem;
-          bottom: calc(1.25rem + env(safe-area-inset-bottom));
+          right: 1rem;
+          bottom: calc(1rem + env(safe-area-inset-bottom));
           z-index: 10000;
+          width: 64px !important;
+          height: 64px !important;
         }
         .st-key-cart-fab-shell .stButton > button {
-          min-height: 3.2rem;
-          padding: 0 1.1rem;
-          border-radius: 999px;
+          width: 64px !important;
+          height: 64px !important;
+          min-height: 64px;
+          padding: 0 !important;
+          border-radius: 50%;
           background: #fff159;
           border: 1px solid rgba(0, 0, 0, 0.12);
           color: #333333;
           box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
           font-weight: 900;
         }
+        .st-key-cart-fab-shell .stButton > button p {
+          display: none;
+        }
+        .st-key-cart-fab-shell .stButton > button [data-testid="stIconMaterial"] {
+          font-size: 1.8rem;
+          margin: 0;
+        }
+        .st-key-cart-fab-shell .stButton::after {
+          position: absolute;
+          top: -6px;
+          right: -4px;
+          min-width: 22px;
+          height: 22px;
+          border-radius: 999px;
+          background: #3483fa;
+          color: #ffffff;
+          display: grid;
+          place-items: center;
+          font-size: 0.72rem;
+          font-weight: 900;
+          border: 2px solid #ffffff;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+        }
+        .cart-dialog-head {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          gap: 0.75rem;
+          margin: 0.15rem 0 0.4rem;
+        }
+        .cart-dialog-title {
+          font-size: 1rem;
+          font-weight: 900;
+          color: #111827;
+        }
+        .cart-dialog-count {
+          color: #6b7280;
+          font-size: 0.82rem;
+          font-weight: 700;
+        }
+        .cart-dialog-total {
+          background: #fff159;
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          border-radius: 12px;
+          padding: 0.75rem 0.85rem;
+          margin: 0.35rem 0 0.75rem;
+        }
+        .cart-dialog-total span {
+          display: block;
+          color: #555555;
+          font-size: 0.78rem;
+          font-weight: 800;
+          text-transform: uppercase;
+        }
+        .cart-dialog-total strong {
+          display: block;
+          color: #333333;
+          font-size: 1.4rem;
+          line-height: 1.1;
+          margin-top: 0.15rem;
+          font-weight: 900;
+        }
         .cart-qty-display {
-          height: 2.3rem;
+          height: 2rem;
+          min-width: 2rem;
           display: grid;
           place-items: center;
           font-weight: 900;
           color: #333333;
+        }
+        .cart-item-line {
+          display: flex;
+          flex-direction: column;
+          gap: 0.1rem;
+        }
+        .cart-item-name {
+          font-weight: 900;
+          line-height: 1.15;
+          color: #111827;
+        }
+        .cart-item-meta {
+          color: #6b7280;
+          font-size: 0.82rem;
+          line-height: 1.25;
+        }
+        .cart-item-subtotal {
+          color: #333333;
+          font-weight: 700;
+          font-size: 0.92rem;
+        }
+        [class*="st-key-dialog-cart-item"] div[data-testid="stVerticalBlockBorderWrapper"] {
+          border-radius: 12px;
+          background: #ffffff;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.10);
+          border-color: rgba(0, 0, 0, 0.08);
+        }
+        [class*="st-key-dialog-cart-controls"] {
+          align-items: center;
+        }
+        [class*="st-key-dialog-cart-controls"] .stButton > button {
+          width: 2.1rem;
+          min-width: 2.1rem;
+          height: 2.1rem;
+          min-height: 2.1rem;
+          padding: 0;
+          border-radius: 999px;
+        }
+        [class*="st-key-dialog-cart-controls"] .stButton:last-child > button {
+          width: auto;
+          min-width: 5.6rem;
+          padding: 0 0.8rem;
         }
         [class*="st-key-product-card"] div[data-testid="stVerticalBlockBorderWrapper"] {
           border-radius: 8px;
@@ -1070,7 +1179,18 @@ def apply_styles() -> None:
           border-radius: 10px;
         }
         .st-key-cart-dialog .stButton > button {
-          min-height: 2.25rem;
+          min-height: 2.1rem;
+        }
+        .st-key-cart-dialog div[data-testid="stImage"] img {
+          width: 56px !important;
+          height: 56px !important;
+          object-fit: cover !important;
+          border-radius: 8px;
+        }
+        div[data-testid="stDialog"] div[role="dialog"] {
+          border-radius: 18px;
+          max-height: min(86vh, 720px);
+          overflow: auto;
         }
         @media (max-width: 900px) {
           .block-container {
@@ -1119,12 +1239,18 @@ def apply_styles() -> None:
             grid-template-columns: 1fr;
           }
           .st-key-cart-fab-shell .stButton {
-            right: 0.9rem;
-            bottom: calc(0.9rem + env(safe-area-inset-bottom));
+            right: 0.85rem;
+            bottom: calc(0.85rem + env(safe-area-inset-bottom));
+            width: 58px !important;
+            height: 58px !important;
           }
           .st-key-cart-fab-shell .stButton > button {
-            min-height: 3rem;
-            padding: 0 0.95rem;
+            width: 58px !important;
+            height: 58px !important;
+            min-height: 58px;
+          }
+          .st-key-cart-fab-shell .stButton > button [data-testid="stIconMaterial"] {
+            font-size: 1.65rem;
           }
           .section-heading {
             font-size: 1.25rem;
@@ -1135,10 +1261,22 @@ def apply_styles() -> None:
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.13);
           }
           [class*="st-key-product-card"] div[data-testid="stImage"] img {
-            height: 190px !important;
+            height: 165px !important;
           }
           .product-description {
             min-height: auto;
+          }
+          div[data-testid="stDialog"] div[role="dialog"] {
+            width: min(94vw, 520px) !important;
+            max-height: 78vh !important;
+            padding: 0.8rem !important;
+            border-radius: 18px;
+          }
+          .cart-dialog-total {
+            margin-bottom: 0.55rem;
+          }
+          [class*="st-key-dialog-cart-item"] div[data-testid="stVerticalBlockBorderWrapper"] {
+            border-radius: 12px;
           }
         }
         </style>
@@ -1896,6 +2034,179 @@ def render_cart_panel(
             st.rerun()
 
 
+def render_compact_cart_panel(
+    products: list[dict[str, Any]],
+    database_url: str | None,
+    phone: str,
+    key_prefix: str = "cart",
+) -> None:
+    items = cart_items(products)
+    totals = calculate_totals(items)
+
+    st.markdown(
+        f"""
+        <div class="cart-dialog-head">
+          <div>
+            <div class="cart-dialog-title">Itens escolhidos</div>
+            <div class="cart-dialog-count">{totals["item_count"]} item(ns) no carrinho</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if not items:
+        st.markdown(
+            '<div class="cart-empty">Carrinho vazio. Escolha um produto para começar.</div>',
+            unsafe_allow_html=True,
+        )
+        return
+
+    for item in items:
+        product = item["product"]
+        unit_label = format_money(item["unit_price"]) if not item["flexible"] else "A combinar"
+        subtotal_label = format_money(item["subtotal"]) if item["subtotal"] else "A combinar"
+        meta = f"Unitário: {unit_label}"
+        if item.get("color"):
+            meta += f" • Cor: {item['color']}"
+
+        with st.container(border=True, key=f"{key_prefix}-cart-item-{item['cart_key']}"):
+            with st.container(
+                horizontal=True,
+                vertical_alignment="center",
+                gap="small",
+                key=f"{key_prefix}-cart-row-{item['cart_key']}",
+            ):
+                source = image_source(product.get("image"))
+                if source:
+                    st.image(source, width=56)
+                st.markdown(
+                    f"""
+                    <div class="cart-item-line">
+                      <div class="cart-item-name">{product["name"]}</div>
+                      <div class="cart-item-meta">{meta}</div>
+                      <div class="cart-item-subtotal">Subtotal: {subtotal_label}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            with st.container(
+                horizontal=True,
+                vertical_alignment="center",
+                gap="small",
+                key=f"{key_prefix}-cart-controls-{item['cart_key']}",
+            ):
+                dec = st.button("-", key=f"{key_prefix}-dec-{item['cart_key']}")
+                st.markdown(
+                    f'<div class="cart-qty-display">{item["qty"]}</div>',
+                    unsafe_allow_html=True,
+                )
+                inc = st.button("+", key=f"{key_prefix}-inc-{item['cart_key']}")
+                remove = st.button("Remover", key=f"{key_prefix}-remove-{item['cart_key']}")
+
+            if dec:
+                set_cart_qty(item["cart_key"], item["qty"] - 1)
+                st.rerun()
+            if inc:
+                set_cart_qty(item["cart_key"], item["qty"] + 1)
+                st.rerun()
+            if remove:
+                remove_from_cart(item["cart_key"])
+                st.rerun()
+
+    st.markdown(
+        f"""
+        <div class="cart-dialog-total">
+          <span>Total</span>
+          <strong>{total_label(totals)}</strong>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    if totals["discount_amount"] > 0:
+        discount_percent = int(totals["discount_rate"] * 100)
+        st.success(f"Desconto ({discount_percent}%): -{format_money(totals['discount_amount'])}")
+    elif totals["item_count"] < 2:
+        st.caption("A partir de 2 itens, o desconto entra automaticamente.")
+    else:
+        st.caption("Maior desconto aplicado automaticamente.")
+
+    name_key = f"{key_prefix}-customer-name"
+    notes_key = f"{key_prefix}-customer-notes"
+    if st.session_state.get(name_key) != st.session_state.customer_name:
+        st.session_state[name_key] = st.session_state.customer_name
+    if st.session_state.get(notes_key) != st.session_state.customer_notes:
+        st.session_state[notes_key] = st.session_state.customer_notes
+
+    st.text_input(
+        "Nome do cliente",
+        key=name_key,
+        on_change=sync_customer_field,
+        args=(name_key, "customer_name"),
+    )
+    st.text_area(
+        "Observações",
+        key=notes_key,
+        placeholder="Ex: entrega semana que vem",
+        height=82,
+        on_change=sync_customer_field,
+        args=(notes_key, "customer_notes"),
+    )
+
+    with st.container(horizontal=True, gap="small", key=f"{key_prefix}-quick-notes"):
+        for note, label in [
+            ("Personalizado", "Personalizado"),
+            ("Retirada", "Retirada"),
+            ("Entrega", "Entrega"),
+        ]:
+            st.button(
+                label,
+                key=f"{key_prefix}-quick-{note}",
+                on_click=append_quick_note,
+                args=(note,),
+            )
+
+    customer_name = st.session_state.customer_name.strip()
+    notes = st.session_state.customer_notes.strip()
+
+    if st.button(
+        "Finalizar no WhatsApp",
+        type="primary",
+        width="stretch",
+        key=f"{key_prefix}-finalize",
+    ):
+        if not customer_name:
+            st.error("Informe o nome para continuar.")
+        else:
+            order = build_order(items, totals, customer_name, notes)
+            saved, error = save_order(database_url, order)
+            st.session_state.checkout_message = order["whatsapp_message"]
+            st.session_state.checkout_url = whatsapp_url(phone, order["whatsapp_message"])
+            st.session_state.last_order_id = order["id"]
+            st.session_state.order_saved = saved
+            st.session_state.order_save_error = error
+            st.rerun()
+
+    if st.session_state.checkout_url:
+        if st.session_state.order_saved:
+            st.success(f"Pedido {st.session_state.last_order_id} salvo no Neon.")
+        else:
+            st.warning(st.session_state.order_save_error or "Pedido não salvo no Neon.")
+        st.link_button(
+            "Abrir WhatsApp",
+            st.session_state.checkout_url,
+            type="primary",
+            width="stretch",
+            key=f"{key_prefix}-open-whatsapp",
+        )
+
+    if st.button("Limpar carrinho", width="stretch", key=f"{key_prefix}-clear"):
+        st.session_state.cart = {}
+        clear_checkout_state()
+        st.rerun()
+
+
 def close_cart_dialog() -> None:
     st.session_state.cart_dialog_open = False
 
@@ -1903,15 +2214,25 @@ def close_cart_dialog() -> None:
 @st.dialog("Carrinho", width="small", on_dismiss=close_cart_dialog)
 def render_cart_dialog(products: list[dict[str, Any]], database_url: str | None, phone: str) -> None:
     with st.container(key="cart-dialog"):
-        render_cart_panel(products, database_url, phone, key_prefix="dialog")
+        render_compact_cart_panel(products, database_url, phone, key_prefix="dialog")
 
 
 def render_cart_fab(products: list[dict[str, Any]], database_url: str | None, phone: str) -> None:
     totals = calculate_totals(cart_items(products))
     item_count = totals["item_count"]
-    label = f"Carrinho ({item_count})" if item_count else "Carrinho"
+    badge_rule = (
+        f'.st-key-cart-fab-shell .stButton::after {{ content: "{item_count}"; }}'
+        if item_count
+        else ".st-key-cart-fab-shell .stButton::after { display: none; }"
+    )
+    st.markdown(f"<style>{badge_rule}</style>", unsafe_allow_html=True)
     with st.container(key="cart-fab-shell"):
-        if st.button(label, key="cart-fab-button"):
+        if st.button(
+            "Carrinho",
+            key="cart-fab-button",
+            icon=":material/shopping_cart:",
+            help="Abrir carrinho",
+        ):
             st.session_state.cart_dialog_open = True
     if st.session_state.cart_dialog_open:
         render_cart_dialog(products, database_url, phone)
