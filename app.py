@@ -784,8 +784,8 @@ def apply_styles() -> None:
           color: #0b1021;
         }
         .block-container {
-          max-width: 1440px;
-          padding: 0 1.25rem 3rem;
+          max-width: 1280px;
+          padding: 0 1.25rem 4rem;
         }
         .hero-band {
           background: #ffffff;
@@ -816,7 +816,7 @@ def apply_styles() -> None:
         }
         .brand-title {
           margin: 0;
-          font-size: 1.22rem;
+          font-size: clamp(1.35rem, 2.6vw, 2.15rem);
           line-height: 1.12;
           letter-spacing: 0;
           font-weight: 900;
@@ -828,7 +828,7 @@ def apply_styles() -> None:
           font-size: 0.88rem;
         }
         .pill-note {
-          border-radius: 14px;
+          border-radius: 999px;
           padding: 0.62rem 0.85rem;
           text-align: center;
           font-weight: 800;
@@ -919,14 +919,24 @@ def apply_styles() -> None:
         .st-key-market-search-shell {
           background: #ffffff;
           margin: 0 -1.25rem;
-          padding: 0.75rem 1rem;
+          padding: 0.75rem 1rem 0.85rem;
           box-shadow: 0 1px 5px rgba(0, 0, 0, 0.10);
           position: sticky;
           top: 0;
           z-index: 50;
         }
-        .st-key-search-cart-row {
+        .st-key-search-cart-row div[data-testid="stHorizontalBlock"] {
           align-items: center;
+          flex-wrap: nowrap;
+          gap: 0.7rem;
+        }
+        .st-key-search-cart-row div[data-testid="stTextInput"] {
+          flex: 1 1 auto;
+          min-width: 0;
+        }
+        .st-key-search-cart-row div[data-testid="stElementContainer"]:has(.st-key-cart-fab-shell) {
+          flex: 0 0 48px;
+          width: 48px !important;
         }
         .st-key-market-search-shell div[data-testid="stTextInput"] input,
         .st-key-market-search-shell div[data-testid="stSelectbox"] div[data-baseweb="select"] {
@@ -952,7 +962,7 @@ def apply_styles() -> None:
           box-shadow: none;
         }
         .product-title {
-          font-size: 0.98rem;
+          font-size: 1rem;
           font-weight: 800;
           line-height: 1.2;
           margin: 0.3rem 0 0.15rem;
@@ -968,7 +978,7 @@ def apply_styles() -> None:
           overflow: hidden;
         }
         .price-line {
-          font-size: 1.38rem;
+          font-size: 1.32rem;
           font-weight: 800;
           color: #ee4d2d;
           margin: 0.15rem 0 0.2rem;
@@ -1105,7 +1115,6 @@ def apply_styles() -> None:
           z-index: 2;
           width: 48px !important;
           height: 48px !important;
-          margin-left: auto;
         }
         .st-key-cart-fab-shell .stButton > button {
           width: 48px !important;
@@ -1118,13 +1127,18 @@ def apply_styles() -> None:
           color: #ee4d2d;
           box-shadow: none;
           font-weight: 900;
+          font-size: 0 !important;
+          overflow: visible;
         }
         .st-key-cart-fab-shell .stButton > button p {
-          display: none;
+          display: none !important;
+          font-size: 0 !important;
+          line-height: 0 !important;
         }
         .st-key-cart-fab-shell .stButton > button [data-testid="stIconMaterial"] {
-          font-size: 1.8rem;
-          margin: 0;
+          font-size: 1.85rem !important;
+          margin: 0 !important;
+          line-height: 1 !important;
         }
         .st-key-cart-fab-shell .stButton::after {
           position: absolute;
@@ -1232,17 +1246,17 @@ def apply_styles() -> None:
           padding: 0 0.8rem;
         }
         [class*="st-key-product-card"] div[data-testid="stVerticalBlockBorderWrapper"] {
-          border-radius: 4px;
+          border-radius: 12px;
           background: #ffffff;
-          box-shadow: none;
-          border-color: rgba(0, 0, 0, 0.06);
+          box-shadow: 0 1px 8px rgba(15, 23, 42, 0.08);
+          border-color: rgba(15, 23, 42, 0.06);
         }
         [class*="st-key-product-card"] div[data-testid="stImage"] img {
-          height: 205px !important;
+          height: 230px !important;
           width: 100% !important;
-          object-fit: contain !important;
+          object-fit: cover !important;
           background: #ffffff;
-          border-radius: 4px;
+          border-radius: 10px;
         }
         [class*="st-key-product-card"] div[data-testid="stImage"] {
           margin-bottom: 0.35rem;
@@ -1259,16 +1273,6 @@ def apply_styles() -> None:
         [class*="st-key-product-card"] div[data-testid="stSelectbox"] {
           margin-top: 0.15rem;
           margin-bottom: 0.45rem;
-        }
-        [class*="st-key-product-row"] div[data-testid="stHorizontalBlock"] {
-          display: grid !important;
-          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-          gap: 0.75rem !important;
-        }
-        [class*="st-key-product-row"] div[data-testid="column"] {
-          width: 100% !important;
-          min-width: 0 !important;
-          flex: initial !important;
         }
         .st-key-cart-dialog div[data-testid="stVerticalBlockBorderWrapper"] {
           border-radius: 10px;
@@ -1289,36 +1293,43 @@ def apply_styles() -> None:
         }
         @media (max-width: 900px) {
           .block-container {
-            padding: 0 0.75rem 2rem;
+            padding: 0 0.65rem 4rem;
           }
           .hero-band {
-            padding: 0.7rem 0.75rem;
-            border-radius: 0 0 14px 14px;
-            margin: 0 -0.75rem 0;
+            padding: 0.55rem 0.65rem 0.45rem;
+            border-radius: 0;
+            margin: 0 -0.65rem 0;
           }
           .brand-row {
             gap: 0.7rem;
-            margin-bottom: 0.55rem;
+            margin-bottom: 0;
           }
           .brand-logo {
-            width: 58px;
-            height: 58px;
-            border-radius: 13px;
+            width: 44px;
+            height: 44px;
+            border-radius: 11px;
           }
           .brand-title {
-            font-size: 1.2rem;
+            font-size: 1.08rem;
           }
           .brand-subtitle {
-            font-size: 0.86rem;
+            display: none;
           }
           .pill-note {
-            border-radius: 10px;
-            font-size: 0.82rem;
-            padding: 0.5rem;
+            border-radius: 14px;
+            font-size: 0.78rem;
+            padding: 0.52rem 0.6rem;
           }
           .st-key-market-search-shell {
-            margin: 0 -0.75rem;
-            padding: 0 0.75rem 0.7rem;
+            margin: 0 -0.65rem;
+            padding: 0.55rem 0.65rem 0.65rem;
+          }
+          .st-key-search-cart-row div[data-testid="stHorizontalBlock"] {
+            gap: 0.45rem;
+          }
+          .st-key-search-cart-row div[data-testid="stElementContainer"]:has(.st-key-cart-fab-shell) {
+            flex-basis: 44px;
+            width: 44px !important;
           }
           [class*="st-key-market-tile"] div[data-testid="stVerticalBlockBorderWrapper"] {
             min-height: 118px;
@@ -1334,35 +1345,34 @@ def apply_styles() -> None:
             grid-template-columns: 1fr;
           }
           .st-key-cart-fab-shell .stButton {
-            width: 46px !important;
-            height: 46px !important;
+            width: 44px !important;
+            height: 44px !important;
           }
           .st-key-cart-fab-shell .stButton > button {
-            width: 46px !important;
-            height: 46px !important;
-            min-height: 46px;
+            width: 44px !important;
+            height: 44px !important;
+            min-height: 44px;
           }
           .st-key-cart-fab-shell .stButton > button [data-testid="stIconMaterial"] {
-            font-size: 1.65rem;
+            font-size: 1.65rem !important;
           }
           .section-heading {
             font-size: 1.25rem;
             margin-top: 0.65rem;
           }
           [class*="st-key-product-card"] div[data-testid="stVerticalBlockBorderWrapper"] {
-            border-radius: 4px;
-            box-shadow: none;
+            border-radius: 12px;
+            box-shadow: 0 1px 8px rgba(15, 23, 42, 0.08);
           }
           [class*="st-key-product-card"] div[data-testid="stImage"] img {
-            height: 158px !important;
+            height: 168px !important;
+          }
+          .product-title {
+            font-size: 0.96rem;
           }
           .product-description {
             display: none;
             min-height: 0;
-          }
-          [class*="st-key-product-row"] div[data-testid="stHorizontalBlock"] {
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 0.55rem !important;
           }
           [class*="st-key-product-card"] .stButton > button {
             min-height: 2.25rem;
@@ -1380,10 +1390,18 @@ def apply_styles() -> None:
             padding: 0.14rem 0.38rem;
           }
           div[data-testid="stDialog"] div[role="dialog"] {
-            width: min(94vw, 520px) !important;
+            position: fixed !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            top: auto !important;
+            transform: none !important;
+            width: 100vw !important;
+            max-width: 100vw !important;
             max-height: 78vh !important;
-            padding: 0.8rem !important;
-            border-radius: 18px;
+            margin: 0 !important;
+            padding: 0.9rem !important;
+            border-radius: 22px 22px 0 0 !important;
           }
           .cart-dialog-total {
             margin-bottom: 0.55rem;
@@ -1646,10 +1664,7 @@ def render_header(db_status: str, db_error: str | None) -> None:
         unsafe_allow_html=True,
     )
     if db_status == "neon":
-        st.markdown(
-            '<div class="status-line">Catálogo e pedidos conectados ao banco Neon.</div>',
-            unsafe_allow_html=True,
-        )
+        return
     elif db_status == "demo":
         st.info(
             "Configure DATABASE_URL em `.streamlit/secrets.toml` para salvar pedidos no Neon."
@@ -2713,17 +2728,17 @@ def main() -> None:
     database_url = get_setting("DATABASE_URL")
     phone = get_setting("WHATSAPP_PHONE", DEFAULT_WHATSAPP_PHONE) or DEFAULT_WHATSAPP_PHONE
     products, db_status, db_error = load_products(database_url)
+    admin_view = st.query_params.get("admin") == "1"
 
     render_header(db_status, db_error)
-    store_tab, admin_tab = st.tabs(["Loja", "Admin"])
 
-    with store_tab:
-        search, category = render_search_controls(products, database_url, phone)
-        render_store_banners()
-        render_catalog(products, search, category)
-
-    with admin_tab:
+    if admin_view:
         render_admin_panel(database_url)
+        return
+
+    search, category = render_search_controls(products, database_url, phone)
+    render_store_banners()
+    render_catalog(products, search, category)
 
 
 if __name__ == "__main__":
