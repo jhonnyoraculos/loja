@@ -2,9 +2,13 @@ from __future__ import annotations
 
 import copy
 import base64
+import hashlib
+import hmac
 import mimetypes
 import os
 import random
+import re
+import secrets as py_secrets
 import urllib.parse
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
@@ -314,6 +318,15 @@ CREATE TABLE IF NOT EXISTS order_items (
     qty INTEGER NOT NULL,
     subtotal NUMERIC(12, 2)
 );
+
+CREATE TABLE IF NOT EXISTS admin_users (
+    username TEXT PRIMARY KEY,
+    password_hash TEXT NOT NULL,
+    display_name TEXT,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 """
 
 
@@ -361,6 +374,44 @@ def format_product_price(product: dict[str, Any]) -> str:
     return product.get("price_text") or format_money(product.get("price"))
 
 
+def slugify(value: str) -> str:
+    normalized = value.strip().lower()
+    normalized = re.sub(r"[^a-z0-9]+", "-", normalized)
+    normalized = normalized.strip("-")
+    return normalized or f"produto-{random.randint(1000, 9999)}"
+
+
+def parse_csv(value: str) -> list[str]:
+    return [part.strip() for part in value.split(",") if part.strip()]
+
+
+def parse_lines(value: str) -> list[str]:
+    return [line.strip() for line in value.splitlines() if line.strip()]
+
+
+def hash_password(password: str, salt: str | None = None) -> str:
+    salt = salt or py_secrets.token_urlsafe(18)
+    iterations = 260_000
+    digest = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), salt.encode("utf-8"), iterations
+    )
+    return f"pbkdf2_sha256${iterations}${salt}${base64.b64encode(digest).decode('ascii')}"
+
+
+def verify_password(password: str, stored_hash: str) -> bool:
+    try:
+        algorithm, iterations_text, salt, digest = stored_hash.split("$", 3)
+        if algorithm != "pbkdf2_sha256":
+            return False
+        iterations = int(iterations_text)
+        candidate = hashlib.pbkdf2_hmac(
+            "sha256", password.encode("utf-8"), salt.encode("utf-8"), iterations
+        )
+        return hmac.compare_digest(base64.b64encode(candidate).decode("ascii"), digest)
+    except Exception:
+        return False
+
+
 def get_now() -> datetime:
     if ZoneInfo is None:
         return datetime.now()
@@ -382,6 +433,14 @@ def image_source(image_path: str | None) -> str | None:
         return str(path)
     logo = BASE_DIR / "IMAGEM.jpeg"
     return str(logo) if logo.exists() else None
+
+
+def uploaded_image_to_data_uri(uploaded_file: Any) -> str | None:
+    if uploaded_file is None:
+        return None
+    mime_type = uploaded_file.type or "image/jpeg"
+    encoded = base64.b64encode(uploaded_file.getvalue()).decode("ascii")
+    return f"data:{mime_type};base64,{encoded}"
 
 
 @st.cache_data(show_spinner=False)
@@ -406,46 +465,33 @@ def initialize_database(database_url: str) -> bool:
     with psycopg.connect(connection_url, row_factory=dict_row) as conn:
         with conn.cursor() as cur:
             cur.execute(SCHEMA_SQL)
-            for product in DEFAULT_PRODUCTS:
-                cur.execute(
-                    """
-                    INSERT INTO products (
-                        id, name, price, price_text, description, description_long,
-                        category, customizable, pinned, featured, featured_rank,
-                        specs, colors, images, image, active, updated_at
+            cur.execute("SELECT COUNT(*) AS total FROM products")
+            product_count = cur.fetchone()["total"]
+            if product_count == 0:
+                for product in DEFAULT_PRODUCTS:
+                    cur.execute(
+                        """
+                        INSERT INTO products (
+                            id, name, price, price_text, description, description_long,
+                            category, customizable, pinned, featured, featured_rank,
+                            specs, colors, images, image, active, updated_at
+                        )
+                        VALUES (
+                            %(id)s, %(name)s, %(price)s, %(price_text)s,
+                            %(description)s, %(description_long)s, %(category)s,
+                            %(customizable)s, %(pinned)s, %(featured)s,
+                            %(featured_rank)s, %(specs)s, %(colors)s,
+                            %(images)s, %(image)s, TRUE, now()
+                        )
+                        ON CONFLICT (id) DO NOTHING
+                        """,
+                        {
+                            **product,
+                            "specs": Json(product["specs"]),
+                            "colors": Json(product.get("colors", [])),
+                            "images": Json(product.get("images", [])),
+                        },
                     )
-                    VALUES (
-                        %(id)s, %(name)s, %(price)s, %(price_text)s,
-                        %(description)s, %(description_long)s, %(category)s,
-                        %(customizable)s, %(pinned)s, %(featured)s,
-                        %(featured_rank)s, %(specs)s, %(colors)s,
-                        %(images)s, %(image)s, TRUE, now()
-                    )
-                    ON CONFLICT (id) DO UPDATE SET
-                        name = EXCLUDED.name,
-                        price = EXCLUDED.price,
-                        price_text = EXCLUDED.price_text,
-                        description = EXCLUDED.description,
-                        description_long = EXCLUDED.description_long,
-                        category = EXCLUDED.category,
-                        customizable = EXCLUDED.customizable,
-                        pinned = EXCLUDED.pinned,
-                        featured = EXCLUDED.featured,
-                        featured_rank = EXCLUDED.featured_rank,
-                        specs = EXCLUDED.specs,
-                        colors = EXCLUDED.colors,
-                        images = EXCLUDED.images,
-                        image = EXCLUDED.image,
-                        active = TRUE,
-                        updated_at = now()
-                    """,
-                    {
-                        **product,
-                        "specs": Json(product["specs"]),
-                        "colors": Json(product.get("colors", [])),
-                        "images": Json(product.get("images", [])),
-                    },
-                )
         conn.commit()
     return True
 
@@ -470,6 +516,141 @@ def fetch_products_from_database(database_url: str) -> list[dict[str, Any]]:
             )
             rows = cur.fetchall()
     return [dict(row) for row in rows]
+
+
+def fetch_all_products_from_database(database_url: str) -> list[dict[str, Any]]:
+    connection_url = normalize_database_url(database_url)
+    with psycopg.connect(connection_url, row_factory=dict_row) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    id, name, price, price_text, description, description_long,
+                    category, customizable, pinned, featured, featured_rank,
+                    specs, colors, images, image, active
+                FROM products
+                ORDER BY
+                    CASE WHEN active THEN 0 ELSE 1 END,
+                    CASE WHEN pinned THEN 0 ELSE 1 END,
+                    COALESCE(featured_rank, 999),
+                    name
+                """
+            )
+            rows = cur.fetchall()
+    return [dict(row) for row in rows]
+
+
+def upsert_product(database_url: str, product: dict[str, Any]) -> None:
+    connection_url = normalize_database_url(database_url)
+    with psycopg.connect(connection_url, row_factory=dict_row) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO products (
+                    id, name, price, price_text, description, description_long,
+                    category, customizable, pinned, featured, featured_rank,
+                    specs, colors, images, image, active, updated_at
+                )
+                VALUES (
+                    %(id)s, %(name)s, %(price)s, %(price_text)s,
+                    %(description)s, %(description_long)s, %(category)s,
+                    %(customizable)s, %(pinned)s, %(featured)s, %(featured_rank)s,
+                    %(specs)s, %(colors)s, %(images)s, %(image)s, %(active)s, now()
+                )
+                ON CONFLICT (id) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    price = EXCLUDED.price,
+                    price_text = EXCLUDED.price_text,
+                    description = EXCLUDED.description,
+                    description_long = EXCLUDED.description_long,
+                    category = EXCLUDED.category,
+                    customizable = EXCLUDED.customizable,
+                    pinned = EXCLUDED.pinned,
+                    featured = EXCLUDED.featured,
+                    featured_rank = EXCLUDED.featured_rank,
+                    specs = EXCLUDED.specs,
+                    colors = EXCLUDED.colors,
+                    images = EXCLUDED.images,
+                    image = EXCLUDED.image,
+                    active = EXCLUDED.active,
+                    updated_at = now()
+                """,
+                {
+                    **product,
+                    "specs": Json(product.get("specs") or {}),
+                    "colors": Json(product.get("colors") or []),
+                    "images": Json(product.get("images") or []),
+                },
+            )
+        conn.commit()
+
+
+def set_product_active(database_url: str, product_id: str, active: bool) -> None:
+    connection_url = normalize_database_url(database_url)
+    with psycopg.connect(connection_url, row_factory=dict_row) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE products SET active = %s, updated_at = now() WHERE id = %s",
+                (active, product_id),
+            )
+        conn.commit()
+
+
+def authenticate_admin(database_url: str, username: str, password: str) -> bool:
+    connection_url = normalize_database_url(database_url)
+    with psycopg.connect(connection_url, row_factory=dict_row) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT password_hash
+                FROM admin_users
+                WHERE username = %s AND active = TRUE
+                """,
+                (username.strip().lower(),),
+            )
+            row = cur.fetchone()
+    return bool(row and verify_password(password, row["password_hash"]))
+
+
+def create_or_update_admin_user(
+    database_url: str,
+    username: str,
+    password: str,
+    display_name: str | None = None,
+) -> None:
+    connection_url = normalize_database_url(database_url)
+    with psycopg.connect(connection_url, row_factory=dict_row) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO admin_users (
+                    username, password_hash, display_name, active, updated_at
+                )
+                VALUES (%s, %s, %s, TRUE, now())
+                ON CONFLICT (username) DO UPDATE SET
+                    password_hash = EXCLUDED.password_hash,
+                    display_name = EXCLUDED.display_name,
+                    active = TRUE,
+                    updated_at = now()
+                """,
+                (username.strip().lower(), hash_password(password), display_name),
+            )
+        conn.commit()
+
+
+def update_admin_password(database_url: str, username: str, password: str) -> None:
+    connection_url = normalize_database_url(database_url)
+    with psycopg.connect(connection_url, row_factory=dict_row) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE admin_users
+                SET password_hash = %s, updated_at = now()
+                WHERE username = %s AND active = TRUE
+                """,
+                (hash_password(password), username.strip().lower()),
+            )
+        conn.commit()
 
 
 def load_products(database_url: str | None) -> tuple[list[dict[str, Any]], str, str | None]:
@@ -940,6 +1121,8 @@ def init_state() -> None:
         "last_order_id": None,
         "order_saved": None,
         "order_save_error": None,
+        "admin_authenticated": False,
+        "admin_username": "",
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -1611,6 +1794,305 @@ def render_cart_panel(
             st.rerun()
 
 
+def product_form_payload(
+    *,
+    product_id: str,
+    name: str,
+    category: str,
+    price_mode: str,
+    price_value: float,
+    price_text: str,
+    description: str,
+    description_long: str,
+    dimensions: str,
+    print_time: str,
+    colors_text: str,
+    image_reference: str,
+    gallery_text: str,
+    uploaded_file: Any,
+    customizable: bool,
+    pinned: bool,
+    featured: bool,
+    featured_rank: int | None,
+    active: bool,
+    existing_product: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    existing_product = existing_product or {}
+    uploaded_image = uploaded_image_to_data_uri(uploaded_file)
+    existing_image = existing_product.get("image") or PERSONALIZED_PLACEHOLDER
+    existing_images = existing_product.get("images") or []
+
+    if uploaded_image:
+        image = uploaded_image
+    elif image_reference.strip():
+        image = image_reference.strip()
+    else:
+        image = existing_image
+
+    gallery = parse_lines(gallery_text)
+    if not gallery and existing_images:
+        gallery = list(existing_images)
+    if image and image not in gallery:
+        gallery.insert(0, image)
+
+    if price_mode == "Preço fixo":
+        price = to_decimal(price_value)
+        final_price_text = None
+    else:
+        price = None
+        final_price_text = price_text.strip() or "A combinar"
+
+    return {
+        "id": product_id.strip().lower(),
+        "name": name.strip(),
+        "price": price,
+        "price_text": final_price_text,
+        "description": description.strip(),
+        "description_long": (description_long.strip() or description.strip()),
+        "category": category.strip() or "Geral",
+        "customizable": customizable,
+        "pinned": pinned,
+        "featured": featured,
+        "featured_rank": featured_rank if featured else None,
+        "specs": {
+            "dimensoes": dimensions.strip() or "A confirmar",
+            "tempo": print_time.strip() or "A confirmar",
+        },
+        "colors": parse_csv(colors_text),
+        "images": gallery,
+        "image": image or PERSONALIZED_PLACEHOLDER,
+        "active": active,
+    }
+
+
+def render_product_admin_form(
+    database_url: str,
+    *,
+    mode: str,
+    product: dict[str, Any] | None = None,
+) -> None:
+    product = product or {}
+    is_edit = mode == "edit"
+    form_key = f"admin-{mode}-{product.get('id', 'new')}"
+
+    current_image = product.get("image") or ""
+    current_images = product.get("images") or []
+    image_reference_value = "" if current_image.startswith("data:") else current_image
+    gallery_value = "\n".join(
+        image for image in current_images if image and not str(image).startswith("data:")
+    )
+    price_is_fixed = product.get("price") is not None
+
+    if current_image:
+        preview = image_source(current_image)
+        if preview:
+            st.image(preview, width=220)
+
+    with st.form(form_key):
+        if is_edit:
+            product_id = st.text_input("ID do produto", value=product["id"], disabled=True)
+        else:
+            suggested_id = slugify(product.get("name", "novo-produto"))
+            product_id = st.text_input("ID do produto", value=suggested_id)
+
+        name = st.text_input("Nome", value=product.get("name", ""))
+        category = st.text_input("Categoria", value=product.get("category", "Suportes"))
+        price_mode = st.radio(
+            "Tipo de preço",
+            ["Preço fixo", "A combinar"],
+            index=0 if price_is_fixed else 1,
+            horizontal=True,
+        )
+        price_value = st.number_input(
+            "Preço",
+            min_value=0.0,
+            value=float(product.get("price") or 0),
+            step=0.5,
+            format="%.2f",
+            disabled=price_mode != "Preço fixo",
+        )
+        price_text = st.text_input(
+            "Texto do preço",
+            value=product.get("price_text") or "A combinar",
+            disabled=price_mode == "Preço fixo",
+        )
+        description = st.text_area("Descrição curta", value=product.get("description", ""), height=80)
+        description_long = st.text_area(
+            "Descrição completa",
+            value=product.get("description_long", ""),
+            height=110,
+        )
+
+        specs = product.get("specs") or {}
+        dimensions = st.text_input("Dimensões", value=specs.get("dimensoes", "A confirmar"))
+        print_time = st.text_input("Tempo de impressão", value=specs.get("tempo", "A confirmar"))
+        colors_text = st.text_input("Cores, separadas por vírgula", value=", ".join(product.get("colors") or []))
+
+        image_reference = st.text_input(
+            "Imagem principal (URL ou caminho do repo)",
+            value=image_reference_value,
+            help="Se já existe imagem enviada ao banco, deixe vazio para manter.",
+        )
+        gallery_text = st.text_area(
+            "Galeria (uma URL/caminho por linha)",
+            value=gallery_value,
+            height=110,
+        )
+        uploaded_file = st.file_uploader(
+            "Enviar nova imagem para salvar no banco",
+            type=["png", "jpg", "jpeg", "webp"],
+            key=f"{form_key}-upload",
+        )
+
+        flag_cols = st.columns(5)
+        with flag_cols[0]:
+            customizable = st.checkbox("Personalizável", value=bool(product.get("customizable", False)))
+        with flag_cols[1]:
+            pinned = st.checkbox("Fixar primeiro", value=bool(product.get("pinned", False)))
+        with flag_cols[2]:
+            featured = st.checkbox("Destaque", value=bool(product.get("featured", True)))
+        with flag_cols[3]:
+            active = st.checkbox("Ativo", value=bool(product.get("active", True)))
+        with flag_cols[4]:
+            featured_rank = st.number_input(
+                "Ordem",
+                min_value=0,
+                max_value=999,
+                value=int(product.get("featured_rank") or 10),
+                step=1,
+            )
+
+        submitted = st.form_submit_button(
+            "Salvar produto" if is_edit else "Adicionar produto",
+            type="primary",
+            width="stretch",
+        )
+
+    if submitted:
+        if not product_id.strip() or not name.strip() or not description.strip():
+            st.error("Preencha ID, nome e descrição curta.")
+            return
+        payload = product_form_payload(
+            product_id=product_id,
+            name=name,
+            category=category,
+            price_mode=price_mode,
+            price_value=price_value,
+            price_text=price_text,
+            description=description,
+            description_long=description_long,
+            dimensions=dimensions,
+            print_time=print_time,
+            colors_text=colors_text,
+            image_reference=image_reference,
+            gallery_text=gallery_text,
+            uploaded_file=uploaded_file,
+            customizable=customizable,
+            pinned=pinned,
+            featured=featured,
+            featured_rank=int(featured_rank),
+            active=active,
+            existing_product=product if is_edit else None,
+        )
+        upsert_product(database_url, payload)
+        st.success("Produto salvo no Neon.")
+        st.rerun()
+
+
+def render_admin_login(database_url: str) -> None:
+    with st.form("admin-login-form"):
+        st.subheader("Acesso administrativo")
+        username = st.text_input("Usuário")
+        password = st.text_input("Senha", type="password")
+        submitted = st.form_submit_button("Entrar", type="primary", width="stretch")
+
+    if submitted:
+        if authenticate_admin(database_url, username, password):
+            st.session_state.admin_authenticated = True
+            st.session_state.admin_username = username.strip().lower()
+            st.success("Login feito.")
+            st.rerun()
+        else:
+            st.error("Usuário ou senha inválidos.")
+
+
+def render_admin_panel(database_url: str | None) -> None:
+    if not database_url:
+        st.error("Configure DATABASE_URL para usar a área administrativa.")
+        return
+    if psycopg is None:
+        st.error("Instale as dependências com `pip install -r requirements.txt`.")
+        return
+
+    initialize_database(database_url)
+
+    if not st.session_state.admin_authenticated:
+        render_admin_login(database_url)
+        return
+
+    top_cols = st.columns([0.72, 0.28], vertical_alignment="center")
+    with top_cols[0]:
+        st.success(f"Logado como {st.session_state.admin_username}.")
+    with top_cols[1]:
+        if st.button("Sair", width="stretch"):
+            st.session_state.admin_authenticated = False
+            st.session_state.admin_username = ""
+            st.rerun()
+
+    admin_tabs = st.tabs(["Editar produtos", "Novo produto", "Senha"])
+
+    with admin_tabs[0]:
+        products = fetch_all_products_from_database(database_url)
+        if not products:
+            st.info("Nenhum produto cadastrado ainda.")
+        else:
+            options = {
+                f"{product['name']} ({product['id']}){' - inativo' if not product.get('active') else ''}": product
+                for product in products
+            }
+            selected_label = st.selectbox("Produto", list(options.keys()))
+            selected_product = options[selected_label]
+            render_product_admin_form(database_url, mode="edit", product=selected_product)
+
+    with admin_tabs[1]:
+        render_product_admin_form(
+            database_url,
+            mode="new",
+            product={
+                "id": "novo-produto",
+                "name": "",
+                "description": "",
+                "description_long": "",
+                "category": "Suportes",
+                "price": Decimal("0.00"),
+                "price_text": None,
+                "specs": {"dimensoes": "A confirmar", "tempo": "A confirmar"},
+                "colors": [],
+                "images": [],
+                "image": PERSONALIZED_PLACEHOLDER,
+                "customizable": False,
+                "pinned": False,
+                "featured": True,
+                "featured_rank": 10,
+                "active": True,
+            },
+        )
+
+    with admin_tabs[2]:
+        with st.form("change-admin-password"):
+            new_password = st.text_input("Nova senha", type="password")
+            confirm_password = st.text_input("Confirmar nova senha", type="password")
+            submitted = st.form_submit_button("Alterar senha", type="primary")
+        if submitted:
+            if len(new_password) < 8:
+                st.error("Use uma senha com pelo menos 8 caracteres.")
+            elif new_password != confirm_password:
+                st.error("As senhas não conferem.")
+            else:
+                update_admin_password(database_url, st.session_state.admin_username, new_password)
+                st.success("Senha alterada.")
+
+
 def main() -> None:
     st.set_page_config(page_title=f"{BRAND_NAME} | Catálogo", layout="wide")
     apply_styles()
@@ -1621,21 +2103,27 @@ def main() -> None:
     products, db_status, db_error = load_products(database_url)
 
     render_header(db_status, db_error)
-    search, category = render_search_controls(products)
-    render_store_banners()
-    items_for_badge = cart_items(products)
-    item_count = calculate_totals(items_for_badge)["item_count"]
-    with st.container(key="mobile-cart-shell"):
-        with st.expander(f"Carrinho ({item_count}) / finalizar pedido", expanded=False):
-            render_cart_panel(products, database_url, phone, key_prefix="mobile")
+    store_tab, admin_tab = st.tabs(["Loja", "Admin"])
 
-    render_market_tiles()
-    catalog_col, cart_col = st.columns([0.74, 0.26], gap="large")
-    with catalog_col:
-        render_catalog(products, search, category)
-    with cart_col:
-        with st.container(key="desktop-cart-shell"):
-            render_cart_panel(products, database_url, phone, key_prefix="desktop")
+    with store_tab:
+        search, category = render_search_controls(products)
+        render_store_banners()
+        items_for_badge = cart_items(products)
+        item_count = calculate_totals(items_for_badge)["item_count"]
+        with st.container(key="mobile-cart-shell"):
+            with st.expander(f"Carrinho ({item_count}) / finalizar pedido", expanded=False):
+                render_cart_panel(products, database_url, phone, key_prefix="mobile")
+
+        render_market_tiles()
+        catalog_col, cart_col = st.columns([0.74, 0.26], gap="large")
+        with catalog_col:
+            render_catalog(products, search, category)
+        with cart_col:
+            with st.container(key="desktop-cart-shell"):
+                render_cart_panel(products, database_url, phone, key_prefix="desktop")
+
+    with admin_tab:
+        render_admin_panel(database_url)
 
 
 if __name__ == "__main__":

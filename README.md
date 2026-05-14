@@ -18,7 +18,20 @@ streamlit run app.py
 3. Preencha `DATABASE_URL` com a connection string do Neon.
 4. Ajuste `WHATSAPP_PHONE` se quiser trocar o número de destino.
 
-O app cria automaticamente as tabelas `products`, `orders` e `order_items` no primeiro acesso. O catálogo atual é sincronizado na tabela `products`, e cada pedido finalizado fica salvo em `orders` e `order_items`.
+O app cria automaticamente as tabelas `products`, `orders`, `order_items` e `admin_users` no primeiro acesso. Se a tabela `products` estiver vazia, ele cadastra os produtos iniciais; depois disso, o Neon vira a fonte principal do catálogo. Cada pedido finalizado fica salvo em `orders` e `order_items`.
+
+## Área administrativa
+
+A aba `Admin` permite editar produtos direto no Neon. Ela usa a tabela `admin_users` com senha criptografada.
+
+Na área protegida você pode:
+
+- adicionar produto novo;
+- alterar nome, preço, categoria, descrições, imagens, cores e destaque;
+- ativar ou desativar produtos do catálogo;
+- trocar a senha do usuário logado.
+
+Nunca publique `.streamlit/secrets.toml`. Em produção, coloque `DATABASE_URL` e `WHATSAPP_PHONE` nos secrets da hospedagem.
 
 ## WhatsApp
 
