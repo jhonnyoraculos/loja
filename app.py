@@ -2553,7 +2553,6 @@ def main() -> None:
         search, category = render_search_controls(products)
         render_store_banners()
         render_cart_fab(products, database_url, phone)
-        render_market_tiles()
         render_catalog(products, search, category)
 
     with admin_tab:
