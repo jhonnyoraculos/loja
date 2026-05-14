@@ -53,25 +53,25 @@ PERSONALIZED_PLACEHOLDER = svg_data_uri(
     <svg xmlns="http://www.w3.org/2000/svg" width="900" height="640" viewBox="0 0 900 640">
       <defs>
         <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#ff7702"/>
-          <stop offset="100%" stop-color="#ffb25a"/>
+          <stop offset="0%" stop-color="#fff159"/>
+          <stop offset="100%" stop-color="#ffd53f"/>
         </linearGradient>
         <linearGradient id="plate" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
-          <stop offset="100%" stop-color="#fff7ed" stop-opacity="0.86"/>
+          <stop offset="100%" stop-color="#fff9d8" stop-opacity="0.90"/>
         </linearGradient>
       </defs>
       <rect width="900" height="640" rx="42" fill="url(#bg)"/>
-      <circle cx="130" cy="110" r="70" fill="#ffffff" opacity="0.18"/>
-      <circle cx="760" cy="530" r="145" fill="#ffffff" opacity="0.18"/>
+      <circle cx="130" cy="110" r="70" fill="#ffffff" opacity="0.30"/>
+      <circle cx="760" cy="530" r="145" fill="#ffffff" opacity="0.25"/>
       <path d="M260 390h380l42 52H218l42-52Z" fill="#1d2433" opacity="0.18"/>
       <rect x="285" y="172" width="330" height="225" rx="28" fill="url(#plate)"/>
       <rect x="322" y="210" width="256" height="150" rx="18" fill="#1d2433" opacity="0.10"/>
       <path d="M382 332h136l34 44H348l34-44Z" fill="#0b1021" opacity="0.72"/>
-      <circle cx="450" cy="286" r="58" fill="#ff7702" opacity="0.90"/>
+      <circle cx="450" cy="286" r="58" fill="#3483fa" opacity="0.95"/>
       <path d="M418 286h64M450 254v64" stroke="#fff" stroke-width="18" stroke-linecap="round"/>
-      <text x="450" y="470" text-anchor="middle" font-family="Trebuchet MS, Verdana, sans-serif" font-size="48" font-weight="800" fill="#fff">Personalizados</text>
-      <text x="450" y="512" text-anchor="middle" font-family="Trebuchet MS, Verdana, sans-serif" font-size="24" font-weight="700" fill="#fff7ed">sob medida</text>
+      <text x="450" y="470" text-anchor="middle" font-family="Trebuchet MS, Verdana, sans-serif" font-size="48" font-weight="800" fill="#333333">Personalizados</text>
+      <text x="450" y="512" text-anchor="middle" font-family="Trebuchet MS, Verdana, sans-serif" font-size="24" font-weight="700" fill="#555555">sob medida</text>
     </svg>
     """
 )
@@ -787,18 +787,18 @@ def apply_styles() -> None:
           font-size: 0.88rem;
         }
         .pill-note {
-          border-radius: 18px;
-          padding: 0.7rem 0.9rem;
+          border-radius: 14px;
+          padding: 0.62rem 0.85rem;
           text-align: center;
           font-weight: 800;
-          border: 1px solid rgba(255, 119, 2, 0.36);
-          background: linear-gradient(90deg, rgba(255, 241, 89, 0.70), rgba(255, 119, 2, 0.16));
+          border: 1px solid rgba(245, 196, 0, 0.55);
+          background: linear-gradient(90deg, #fff8bf, #fff3a0);
           margin: 0.75rem 0 0;
           font-size: 0.94rem;
         }
         .pill-note.blue {
-          border-color: rgba(52, 131, 250, 0.38);
-          background: linear-gradient(90deg, rgba(204, 230, 255, 0.95), rgba(52, 131, 250, 0.14));
+          border-color: rgba(245, 196, 0, 0.55);
+          background: linear-gradient(90deg, #fff9d7, #ffef77);
         }
         .market-tiles {
           display: grid;
@@ -843,6 +843,37 @@ def apply_styles() -> None:
           font-weight: 800;
           margin-top: 0.6rem;
           width: fit-content;
+        }
+        [class*="st-key-market-tile"] div[data-testid="stVerticalBlockBorderWrapper"] {
+          min-height: 126px;
+          border-radius: 8px;
+          background: #ffffff;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.13);
+          border-color: rgba(0, 0, 0, 0.05);
+        }
+        .market-tile-copy strong {
+          display: block;
+          color: #333333;
+          font-size: 1rem;
+          margin-bottom: 0.35rem;
+        }
+        .market-tile-copy span {
+          display: block;
+          color: #555555;
+          line-height: 1.35;
+          min-height: 2.7rem;
+        }
+        [class*="st-key-market-tile"] .stButton > button {
+          background: #e8f1ff;
+          border: 0;
+          color: #3483fa;
+          min-height: 2rem;
+          border-radius: 6px;
+          font-weight: 900;
+        }
+        [class*="st-key-market-tile"] .stButton > button:hover {
+          background: #dbeaff;
+          color: #2968c8;
         }
         .st-key-market-search-shell {
           background: #fff159;
@@ -909,8 +940,9 @@ def apply_styles() -> None:
           text-transform: uppercase;
         }
         .badge.hot {
-          background: #ff6f00;
-          color: #ffffff;
+          background: #fff159;
+          color: #333333;
+          border: 1px solid rgba(0, 0, 0, 0.08);
         }
         .section-heading {
           font-size: 1.35rem;
@@ -967,13 +999,13 @@ def apply_styles() -> None:
           min-height: 2.45rem;
         }
         .stButton > button[kind="primary"] {
-          background: #ff6f00;
-          border-color: #ff6f00;
+          background: #3483fa;
+          border-color: #3483fa;
           color: #ffffff;
         }
         .stButton > button[kind="primary"]:hover {
-          background: #f25f00;
-          border-color: #f25f00;
+          background: #2968c8;
+          border-color: #2968c8;
           color: #ffffff;
         }
         div[data-testid="stNumberInput"] input,
@@ -982,15 +1014,28 @@ def apply_styles() -> None:
         div[data-testid="stSelectbox"] div[data-baseweb="select"] {
           border-radius: 12px;
         }
-        .st-key-mobile-cart-shell {
-          display: none;
+        .st-key-cart-fab-shell .stButton {
+          position: fixed;
+          right: 1.25rem;
+          bottom: calc(1.25rem + env(safe-area-inset-bottom));
+          z-index: 10000;
         }
-        .st-key-desktop-cart-shell {
-          position: sticky;
-          top: 0.8rem;
-          max-height: calc(100vh - 1.6rem);
-          overflow-y: auto;
-          padding-bottom: 0.4rem;
+        .st-key-cart-fab-shell .stButton > button {
+          min-height: 3.2rem;
+          padding: 0 1.1rem;
+          border-radius: 999px;
+          background: #fff159;
+          border: 1px solid rgba(0, 0, 0, 0.12);
+          color: #333333;
+          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+          font-weight: 900;
+        }
+        .cart-qty-display {
+          height: 2.3rem;
+          display: grid;
+          place-items: center;
+          font-weight: 900;
+          color: #333333;
         }
         [class*="st-key-product-card"] div[data-testid="stVerticalBlockBorderWrapper"] {
           border-radius: 8px;
@@ -1021,15 +1066,10 @@ def apply_styles() -> None:
           margin-top: 0.15rem;
           margin-bottom: 0.45rem;
         }
-        .st-key-desktop-cart-shell div[data-testid="stVerticalBlockBorderWrapper"],
-        .st-key-mobile-cart-shell div[data-testid="stVerticalBlockBorderWrapper"] {
+        .st-key-cart-dialog div[data-testid="stVerticalBlockBorderWrapper"] {
           border-radius: 10px;
         }
-        .st-key-desktop-cart-shell {
-          scrollbar-width: thin;
-        }
-        .st-key-desktop-cart-shell .stButton > button,
-        .st-key-mobile-cart-shell .stButton > button {
+        .st-key-cart-dialog .stButton > button {
           min-height: 2.25rem;
         }
         @media (max-width: 900px) {
@@ -1065,17 +1105,12 @@ def apply_styles() -> None:
             margin: 0 -0.75rem;
             padding: 0 0.75rem 0.7rem;
           }
-          .market-tiles {
-            display: flex;
-            overflow-x: auto;
-            gap: 0.75rem;
-            margin: 0.8rem -0.75rem 1rem;
-            padding: 0 0.75rem 0.15rem;
+          [class*="st-key-market-tile"] div[data-testid="stVerticalBlockBorderWrapper"] {
+            min-height: 118px;
           }
-          .market-tile {
-            min-width: 185px;
-            min-height: 112px;
-            padding: 0.85rem;
+          .market-tile-copy span {
+            min-height: 2.3rem;
+            font-size: 0.9rem;
           }
           div[data-testid="stImage"] img {
             height: 188px !important;
@@ -1083,12 +1118,13 @@ def apply_styles() -> None:
           .note-row {
             grid-template-columns: 1fr;
           }
-          .st-key-mobile-cart-shell {
-            display: block;
-            margin-bottom: 0.75rem;
+          .st-key-cart-fab-shell .stButton {
+            right: 0.9rem;
+            bottom: calc(0.9rem + env(safe-area-inset-bottom));
           }
-          .st-key-desktop-cart-shell {
-            display: none;
+          .st-key-cart-fab-shell .stButton > button {
+            min-height: 3rem;
+            padding: 0 0.95rem;
           }
           .section-heading {
             font-size: 1.25rem;
@@ -1123,6 +1159,8 @@ def init_state() -> None:
         "order_save_error": None,
         "admin_authenticated": False,
         "admin_username": "",
+        "cart_dialog_open": False,
+        "show_discount_conditions": False,
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -1445,9 +1483,9 @@ def render_product(product: dict[str, Any], suffix: str) -> None:
 
 
 def render_product_grid(products: list[dict[str, Any]], suffix: str) -> None:
-    for start in range(0, len(products), 3):
-        row = products[start : start + 3]
-        cols = st.columns(3)
+    for start in range(0, len(products), 4):
+        row = products[start : start + 4]
+        cols = st.columns(4)
         for col, product in zip(cols, row):
             with col:
                 render_product(product, suffix)
@@ -1455,6 +1493,12 @@ def render_product_grid(products: list[dict[str, Any]], suffix: str) -> None:
 
 def render_search_controls(products: list[dict[str, Any]]) -> tuple[str, str]:
     categories = ["Todas as categorias"] + sorted({product["category"] for product in products})
+    if "catalog_search" not in st.session_state:
+        st.session_state.catalog_search = ""
+    if "catalog_category" not in st.session_state:
+        st.session_state.catalog_category = "Todas as categorias"
+    if st.session_state.catalog_category not in categories:
+        st.session_state.catalog_category = "Todas as categorias"
     with st.container(key="market-search-shell"):
         search_col, category_col = st.columns([0.72, 0.28], gap="small")
         with search_col:
@@ -1462,9 +1506,15 @@ def render_search_controls(products: list[dict[str, Any]]) -> tuple[str, str]:
                 "Buscar",
                 placeholder="Buscar produtos, peças ou ideias",
                 label_visibility="collapsed",
+                key="catalog_search",
             )
         with category_col:
-            category = st.selectbox("Categoria", categories, label_visibility="collapsed")
+            category = st.selectbox(
+                "Categoria",
+                categories,
+                label_visibility="collapsed",
+                key="catalog_category",
+            )
     return search, category
 
 
@@ -1480,42 +1530,88 @@ def render_store_banners() -> None:
     )
 
 
-def render_market_tiles() -> None:
-    st.markdown(
-        """
-        <div class="market-tiles">
-          <div class="market-tile">
-            <div>
-              <strong>Frete grátis</strong>
-              <span>Entrega grátis em São Gonçalo do Pará - MG.</span>
-            </div>
-            <small>Ver produtos</small>
-          </div>
-          <div class="market-tile">
-            <div>
-              <strong>Peças sob medida</strong>
-              <span>Você envia a referência e eu combino o valor final.</span>
-            </div>
-            <small>Personalizados</small>
-          </div>
-          <div class="market-tile">
-            <div>
-              <strong>Menos de R$100</strong>
-              <span>Suportes e decoração com preços baixos.</span>
-            </div>
-            <small>Explorar</small>
-          </div>
-          <div class="market-tile">
-            <div>
-              <strong>Desconto progressivo</strong>
-              <span><em>Até 7% OFF</em> comprando mais itens.</span>
-            </div>
-            <small>Ver condição</small>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+def set_catalog_filter(category: str = "Todas as categorias", search: str = "") -> None:
+    st.session_state.catalog_category = category
+    st.session_state.catalog_search = search
+
+
+def toggle_discount_conditions() -> None:
+    st.session_state.show_discount_conditions = not st.session_state.get(
+        "show_discount_conditions", False
     )
+
+
+def render_market_tile(
+    title: str,
+    body: str,
+    button_label: str,
+    key: str,
+    *,
+    category: str = "Todas as categorias",
+    search: str = "",
+    discount_toggle: bool = False,
+) -> None:
+    with st.container(border=True, key=f"market-tile-{key}"):
+        st.markdown(
+            f"""
+            <div class="market-tile-copy">
+              <strong>{title}</strong>
+              <span>{body}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if discount_toggle:
+            st.button(
+                button_label,
+                key=f"tile-button-{key}",
+                on_click=toggle_discount_conditions,
+                width="stretch",
+            )
+        else:
+            st.button(
+                button_label,
+                key=f"tile-button-{key}",
+                on_click=set_catalog_filter,
+                args=(category, search),
+                width="stretch",
+            )
+
+
+def render_market_tiles() -> None:
+    cols = st.columns(4)
+    with cols[0]:
+        render_market_tile(
+            "Frete grátis",
+            "Entrega grátis em São Gonçalo do Pará - MG.",
+            "Ver produtos",
+            "free-shipping",
+        )
+    with cols[1]:
+        render_market_tile(
+            "Peças sob medida",
+            "Você envia a referência e eu combino o valor final.",
+            "Personalizados",
+            "custom",
+            category="Personalizados",
+        )
+    with cols[2]:
+        render_market_tile(
+            "Menos de R$100",
+            "Suportes e decoração com preços baixos.",
+            "Explorar",
+            "under-100",
+        )
+    with cols[3]:
+        render_market_tile(
+            "Desconto progressivo",
+            "Até 7% OFF comprando mais itens.",
+            "Ver condição",
+            "discount",
+            discount_toggle=True,
+        )
+    if st.session_state.get("show_discount_conditions", False):
+        st.info("Desconto automático no carrinho: 2 itens = 2%, 3 itens = 5%, 6 itens = 7%.")
 
 
 def render_catalog(products: list[dict[str, Any]], search: str, category: str) -> None:
@@ -1663,32 +1759,38 @@ def render_cart_panel(
             for item in items:
                 product = item["product"]
                 with st.container(border=True):
-                    st.write(f"**{product['name']}**")
-                    if item.get("color"):
-                        st.caption(f"Cor: {item['color']}")
                     unit_label = format_money(item["unit_price"]) if not item["flexible"] else "A combinar"
                     subtotal_label = format_money(item["subtotal"]) if item["subtotal"] else "A combinar"
-                    st.caption(f"Unitário: {unit_label}")
+                    st.write(f"**{product['name']}**")
+                    meta = f"Unitário: {unit_label}"
+                    if item.get("color"):
+                        meta += f" • Cor: {item['color']}"
+                    st.caption(meta)
                     st.write(f"Subtotal: **{subtotal_label}**")
 
-                    qty_col, remove_col = st.columns([0.58, 0.42], vertical_alignment="bottom")
+                    dec_col, qty_col, inc_col, remove_col = st.columns(
+                        [0.18, 0.18, 0.18, 0.46], vertical_alignment="center"
+                    )
+                    with dec_col:
+                        dec = st.button("-", key=f"{key_prefix}-dec-{item['cart_key']}")
                     with qty_col:
-                        qty = st.number_input(
-                            "Qtd.",
-                            min_value=1,
-                            max_value=99,
-                            value=item["qty"],
-                            step=1,
-                            key=f"{key_prefix}-qty-{item['cart_key']}",
+                        st.markdown(
+                            f'<div class="cart-qty-display">{item["qty"]}</div>',
+                            unsafe_allow_html=True,
                         )
+                    with inc_col:
+                        inc = st.button("+", key=f"{key_prefix}-inc-{item['cart_key']}")
                     with remove_col:
                         remove = st.button(
                             "Remover",
                             key=f"{key_prefix}-remove-{item['cart_key']}",
                             width="stretch",
                         )
-                    if int(qty) != item["qty"]:
-                        set_cart_qty(item["cart_key"], int(qty))
+                    if dec:
+                        set_cart_qty(item["cart_key"], item["qty"] - 1)
+                        st.rerun()
+                    if inc:
+                        set_cart_qty(item["cart_key"], item["qty"] + 1)
                         st.rerun()
                     if remove:
                         remove_from_cart(item["cart_key"])
@@ -1792,6 +1894,27 @@ def render_cart_panel(
             st.session_state.cart = {}
             clear_checkout_state()
             st.rerun()
+
+
+def close_cart_dialog() -> None:
+    st.session_state.cart_dialog_open = False
+
+
+@st.dialog("Carrinho", width="small", on_dismiss=close_cart_dialog)
+def render_cart_dialog(products: list[dict[str, Any]], database_url: str | None, phone: str) -> None:
+    with st.container(key="cart-dialog"):
+        render_cart_panel(products, database_url, phone, key_prefix="dialog")
+
+
+def render_cart_fab(products: list[dict[str, Any]], database_url: str | None, phone: str) -> None:
+    totals = calculate_totals(cart_items(products))
+    item_count = totals["item_count"]
+    label = f"Carrinho ({item_count})" if item_count else "Carrinho"
+    with st.container(key="cart-fab-shell"):
+        if st.button(label, key="cart-fab-button"):
+            st.session_state.cart_dialog_open = True
+    if st.session_state.cart_dialog_open:
+        render_cart_dialog(products, database_url, phone)
 
 
 def product_form_payload(
@@ -2108,19 +2231,9 @@ def main() -> None:
     with store_tab:
         search, category = render_search_controls(products)
         render_store_banners()
-        items_for_badge = cart_items(products)
-        item_count = calculate_totals(items_for_badge)["item_count"]
-        with st.container(key="mobile-cart-shell"):
-            with st.expander(f"Carrinho ({item_count}) / finalizar pedido", expanded=False):
-                render_cart_panel(products, database_url, phone, key_prefix="mobile")
-
+        render_cart_fab(products, database_url, phone)
         render_market_tiles()
-        catalog_col, cart_col = st.columns([0.74, 0.26], gap="large")
-        with catalog_col:
-            render_catalog(products, search, category)
-        with cart_col:
-            with st.container(key="desktop-cart-shell"):
-                render_cart_panel(products, database_url, phone, key_prefix="desktop")
+        render_catalog(products, search, category)
 
     with admin_tab:
         render_admin_panel(database_url)
