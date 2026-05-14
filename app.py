@@ -935,8 +935,8 @@ def apply_styles() -> None:
           min-width: 0;
         }
         .st-key-search-cart-row div[data-testid="stElementContainer"]:has(.st-key-cart-fab-shell) {
-          flex: 0 0 48px;
-          width: 48px !important;
+          flex: 0 0 52px;
+          width: 52px !important;
         }
         .st-key-market-search-shell div[data-testid="stTextInput"] input,
         .st-key-market-search-shell div[data-testid="stSelectbox"] div[data-baseweb="select"] {
@@ -1113,13 +1113,13 @@ def apply_styles() -> None:
         .st-key-cart-fab-shell .stButton {
           position: relative;
           z-index: 2;
-          width: 48px !important;
-          height: 48px !important;
+          width: 52px !important;
+          height: 52px !important;
         }
         .st-key-cart-fab-shell .stButton > button {
-          width: 48px !important;
-          height: 48px !important;
-          min-height: 48px;
+          width: 52px !important;
+          height: 52px !important;
+          min-height: 52px;
           padding: 0 !important;
           border-radius: 50%;
           background: #ffffff;
@@ -1328,8 +1328,8 @@ def apply_styles() -> None:
             gap: 0.45rem;
           }
           .st-key-search-cart-row div[data-testid="stElementContainer"]:has(.st-key-cart-fab-shell) {
-            flex-basis: 44px;
-            width: 44px !important;
+            flex-basis: 48px;
+            width: 48px !important;
           }
           [class*="st-key-market-tile"] div[data-testid="stVerticalBlockBorderWrapper"] {
             min-height: 118px;
@@ -1345,13 +1345,13 @@ def apply_styles() -> None:
             grid-template-columns: 1fr;
           }
           .st-key-cart-fab-shell .stButton {
-            width: 44px !important;
-            height: 44px !important;
+            width: 48px !important;
+            height: 48px !important;
           }
           .st-key-cart-fab-shell .stButton > button {
-            width: 44px !important;
-            height: 44px !important;
-            min-height: 44px;
+            width: 48px !important;
+            height: 48px !important;
+            min-height: 48px;
           }
           .st-key-cart-fab-shell .stButton > button [data-testid="stIconMaterial"] {
             font-size: 1.65rem !important;
@@ -2375,7 +2375,7 @@ def render_cart_fab(products: list[dict[str, Any]], database_url: str | None, ph
     st.markdown(f"<style>{badge_rule}</style>", unsafe_allow_html=True)
     with st.container(key="cart-fab-shell"):
         if st.button(
-            "Carrinho",
+            " ",
             key="cart-fab-button",
             icon=":material/shopping_cart:",
             help="Abrir carrinho",
