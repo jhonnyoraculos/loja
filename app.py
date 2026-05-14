@@ -81,6 +81,7 @@ DEFAULT_PRODUCTS: list[dict[str, Any]] = [
         "id": "personalizados",
         "name": "Objetos Personalizados",
         "price": None,
+        "compare_at_price": None,
         "price_text": "A combinar",
         "description": "Você escolhe o modelo em outro lugar e me envia para eu produzir.",
         "description_long": (
@@ -101,6 +102,7 @@ DEFAULT_PRODUCTS: list[dict[str, Any]] = [
         "id": "sup-xbox",
         "name": "Suporte de Controle de Xbox",
         "price": Decimal("29.90"),
+        "compare_at_price": None,
         "price_text": None,
         "description": "Suporte firme para controle de Xbox com acabamento clean.",
         "description_long": (
@@ -126,6 +128,7 @@ DEFAULT_PRODUCTS: list[dict[str, Any]] = [
         "id": "placa-f1",
         "name": "Placa Decorativa F1",
         "price": Decimal("23.90"),
+        "compare_at_price": None,
         "price_text": None,
         "description": "Placa decorativa inspirada na Fórmula 1.",
         "description_long": (
@@ -146,6 +149,7 @@ DEFAULT_PRODUCTS: list[dict[str, Any]] = [
         "id": "sup-controle",
         "name": "Suporte para Controles Remotos",
         "price": Decimal("14.90"),
+        "compare_at_price": None,
         "price_text": None,
         "description": "Suporte com 3 compartimentos para controles.",
         "description_long": (
@@ -171,6 +175,7 @@ DEFAULT_PRODUCTS: list[dict[str, Any]] = [
         "id": "sup-gatinho",
         "name": "Suporte de Celular Gatinho",
         "price": Decimal("7.50"),
+        "compare_at_price": None,
         "price_text": None,
         "description": "Suporte de celular com base em formato de gatinho.",
         "description_long": (
@@ -196,6 +201,7 @@ DEFAULT_PRODUCTS: list[dict[str, Any]] = [
         "id": "sup-moderno",
         "name": "Suporte Moderno para Celular",
         "price": Decimal("13.90"),
+        "compare_at_price": None,
         "price_text": None,
         "description": "Suporte moderno com design ondulado.",
         "description_long": (
@@ -221,6 +227,7 @@ DEFAULT_PRODUCTS: list[dict[str, Any]] = [
         "id": "sup-elegante",
         "name": "Suporte Elegante para Celular",
         "price": Decimal("10.50"),
+        "compare_at_price": None,
         "price_text": None,
         "description": "Suporte elegante com base ventilada.",
         "description_long": (
@@ -248,6 +255,7 @@ DEFAULT_PRODUCTS: list[dict[str, Any]] = [
         "id": "sup-ps5",
         "name": "Suporte de Controle de PS5",
         "price": Decimal("29.90"),
+        "compare_at_price": None,
         "price_text": None,
         "description": "Suporte firme para controle de PS5 com acabamento clean.",
         "description_long": (
@@ -277,6 +285,7 @@ CREATE TABLE IF NOT EXISTS products (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     price NUMERIC(12, 2),
+    compare_at_price NUMERIC(12, 2),
     price_text TEXT,
     description TEXT NOT NULL,
     description_long TEXT NOT NULL,
@@ -374,6 +383,36 @@ def format_product_price(product: dict[str, Any]) -> str:
     return product.get("price_text") or format_money(product.get("price"))
 
 
+def get_promotion_percent(product: dict[str, Any]) -> int | None:
+    price = to_decimal(product.get("price"))
+    compare_at_price = to_decimal(product.get("compare_at_price"))
+    if price is None or compare_at_price is None or compare_at_price <= price:
+        return None
+    percent = ((compare_at_price - price) / compare_at_price * Decimal("100")).quantize(
+        Decimal("1"), rounding=ROUND_HALF_UP
+    )
+    return int(percent)
+
+
+def is_promotional_product(product: dict[str, Any]) -> bool:
+    return get_promotion_percent(product) is not None
+
+
+def render_price_html(product: dict[str, Any]) -> str:
+    percent = get_promotion_percent(product)
+    if percent is None:
+        return f'<div class="price-line">{format_product_price(product)}</div>'
+    return (
+        '<div class="price-stack">'
+        f'<span class="old-price">{format_money(product.get("compare_at_price"))}</span>'
+        '<div class="promo-price-row">'
+        f'<span class="price-line promo">{format_money(product.get("price"))}</span>'
+        f'<span class="discount-tag">-{percent}%</span>'
+        '</div>'
+        '</div>'
+    )
+
+
 def slugify(value: str) -> str:
     normalized = value.strip().lower()
     normalized = re.sub(r"[^a-z0-9]+", "-", normalized)
@@ -465,6 +504,7 @@ def initialize_database(database_url: str) -> bool:
     with psycopg.connect(connection_url, row_factory=dict_row) as conn:
         with conn.cursor() as cur:
             cur.execute(SCHEMA_SQL)
+            cur.execute("ALTER TABLE products ADD COLUMN IF NOT EXISTS compare_at_price NUMERIC(12, 2)")
             cur.execute("SELECT COUNT(*) AS total FROM products")
             product_count = cur.fetchone()["total"]
             if product_count == 0:
@@ -472,12 +512,12 @@ def initialize_database(database_url: str) -> bool:
                     cur.execute(
                         """
                         INSERT INTO products (
-                            id, name, price, price_text, description, description_long,
+                            id, name, price, compare_at_price, price_text, description, description_long,
                             category, customizable, pinned, featured, featured_rank,
                             specs, colors, images, image, active, updated_at
                         )
                         VALUES (
-                            %(id)s, %(name)s, %(price)s, %(price_text)s,
+                            %(id)s, %(name)s, %(price)s, %(compare_at_price)s, %(price_text)s,
                             %(description)s, %(description_long)s, %(category)s,
                             %(customizable)s, %(pinned)s, %(featured)s,
                             %(featured_rank)s, %(specs)s, %(colors)s,
@@ -503,7 +543,7 @@ def fetch_products_from_database(database_url: str) -> list[dict[str, Any]]:
             cur.execute(
                 """
                 SELECT
-                    id, name, price, price_text, description, description_long,
+                    id, name, price, compare_at_price, price_text, description, description_long,
                     category, customizable, pinned, featured, featured_rank,
                     specs, colors, images, image
                 FROM products
@@ -525,7 +565,7 @@ def fetch_all_products_from_database(database_url: str) -> list[dict[str, Any]]:
             cur.execute(
                 """
                 SELECT
-                    id, name, price, price_text, description, description_long,
+                    id, name, price, compare_at_price, price_text, description, description_long,
                     category, customizable, pinned, featured, featured_rank,
                     specs, colors, images, image, active
                 FROM products
@@ -547,12 +587,12 @@ def upsert_product(database_url: str, product: dict[str, Any]) -> None:
             cur.execute(
                 """
                 INSERT INTO products (
-                    id, name, price, price_text, description, description_long,
+                    id, name, price, compare_at_price, price_text, description, description_long,
                     category, customizable, pinned, featured, featured_rank,
                     specs, colors, images, image, active, updated_at
                 )
                 VALUES (
-                    %(id)s, %(name)s, %(price)s, %(price_text)s,
+                    %(id)s, %(name)s, %(price)s, %(compare_at_price)s, %(price_text)s,
                     %(description)s, %(description_long)s, %(category)s,
                     %(customizable)s, %(pinned)s, %(featured)s, %(featured_rank)s,
                     %(specs)s, %(colors)s, %(images)s, %(image)s, %(active)s, now()
@@ -560,6 +600,7 @@ def upsert_product(database_url: str, product: dict[str, Any]) -> None:
                 ON CONFLICT (id) DO UPDATE SET
                     name = EXCLUDED.name,
                     price = EXCLUDED.price,
+                    compare_at_price = EXCLUDED.compare_at_price,
                     price_text = EXCLUDED.price_text,
                     description = EXCLUDED.description,
                     description_long = EXCLUDED.description_long,
@@ -739,7 +780,7 @@ def apply_styles() -> None:
           display: none !important;
         }
         .stApp {
-          background: #ebebeb;
+          background: #f5f5f5;
           color: #0b1021;
         }
         .block-container {
@@ -747,10 +788,10 @@ def apply_styles() -> None:
           padding: 0 1.25rem 3rem;
         }
         .hero-band {
-          background: #fff159;
-          border-radius: 0 0 18px 18px;
-          padding: 0.85rem 1rem;
-          box-shadow: 0 2px 10px rgba(40, 40, 40, 0.12);
+          background: #ffffff;
+          border-radius: 0;
+          padding: 0.65rem 1rem;
+          box-shadow: none;
           margin: 0 -1.25rem 0;
         }
         .brand-row {
@@ -876,18 +917,24 @@ def apply_styles() -> None:
           color: #2968c8;
         }
         .st-key-market-search-shell {
-          background: #fff159;
+          background: #ffffff;
           margin: 0 -1.25rem;
-          padding: 0 1rem 0.85rem;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+          padding: 0.75rem 1rem;
+          box-shadow: 0 1px 5px rgba(0, 0, 0, 0.10);
+          position: sticky;
+          top: 0;
+          z-index: 50;
+        }
+        .st-key-search-cart-row {
+          align-items: center;
         }
         .st-key-market-search-shell div[data-testid="stTextInput"] input,
         .st-key-market-search-shell div[data-testid="stSelectbox"] div[data-baseweb="select"] {
-          background: #ffffff;
+          background: #f0f0f0;
           border: 0;
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.20);
-          min-height: 2.8rem;
-          border-radius: 4px;
+          box-shadow: none;
+          min-height: 2.65rem;
+          border-radius: 3px;
         }
         div[data-testid="stVerticalBlockBorderWrapper"] {
           border-color: rgba(0, 0, 0, 0.08);
@@ -905,22 +952,56 @@ def apply_styles() -> None:
           box-shadow: none;
         }
         .product-title {
-          font-size: 1.05rem;
+          font-size: 0.98rem;
           font-weight: 800;
           line-height: 1.2;
           margin: 0.3rem 0 0.15rem;
         }
         .product-description {
-          min-height: 2.9rem;
           color: #444444;
-          font-size: 0.92rem;
-          line-height: 1.45;
+          font-size: 0.82rem;
+          line-height: 1.35;
+          min-height: 2.25rem;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
         .price-line {
-          font-size: 1.45rem;
-          font-weight: 500;
-          color: #333333;
+          font-size: 1.38rem;
+          font-weight: 800;
+          color: #ee4d2d;
           margin: 0.15rem 0 0.2rem;
+        }
+        .price-stack {
+          margin: 0.12rem 0 0.2rem;
+        }
+        .old-price {
+          display: block;
+          color: #8a8a8a;
+          font-size: 0.78rem;
+          text-decoration: line-through;
+          line-height: 1.05;
+        }
+        .promo-price-row {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          flex-wrap: wrap;
+        }
+        .price-line.promo {
+          margin: 0;
+        }
+        .discount-tag {
+          display: inline-flex;
+          align-items: center;
+          border-radius: 3px;
+          padding: 0.12rem 0.28rem;
+          color: #ee4d2d;
+          background: #fff0eb;
+          border: 1px solid #ffd1c4;
+          font-size: 0.72rem;
+          font-weight: 900;
         }
         .badge-row {
           display: flex;
@@ -940,9 +1021,14 @@ def apply_styles() -> None:
           text-transform: uppercase;
         }
         .badge.hot {
-          background: #fff159;
-          color: #333333;
-          border: 1px solid rgba(0, 0, 0, 0.08);
+          background: #fff0eb;
+          color: #ee4d2d;
+          border: 1px solid #ffd1c4;
+        }
+        .badge.sale {
+          background: #ee4d2d;
+          color: #ffffff;
+          border: 1px solid #ee4d2d;
         }
         .section-heading {
           font-size: 1.35rem;
@@ -999,13 +1085,13 @@ def apply_styles() -> None:
           min-height: 2.45rem;
         }
         .stButton > button[kind="primary"] {
-          background: #3483fa;
-          border-color: #3483fa;
+          background: #ee4d2d;
+          border-color: #ee4d2d;
           color: #ffffff;
         }
         .stButton > button[kind="primary"]:hover {
-          background: #2968c8;
-          border-color: #2968c8;
+          background: #d73211;
+          border-color: #d73211;
           color: #ffffff;
         }
         div[data-testid="stNumberInput"] input,
@@ -1015,23 +1101,22 @@ def apply_styles() -> None:
           border-radius: 12px;
         }
         .st-key-cart-fab-shell .stButton {
-          position: fixed;
-          right: 1rem;
-          bottom: calc(1rem + env(safe-area-inset-bottom));
-          z-index: 10000;
-          width: 64px !important;
-          height: 64px !important;
+          position: relative;
+          z-index: 2;
+          width: 48px !important;
+          height: 48px !important;
+          margin-left: auto;
         }
         .st-key-cart-fab-shell .stButton > button {
-          width: 64px !important;
-          height: 64px !important;
-          min-height: 64px;
+          width: 48px !important;
+          height: 48px !important;
+          min-height: 48px;
           padding: 0 !important;
           border-radius: 50%;
-          background: #fff159;
-          border: 1px solid rgba(0, 0, 0, 0.12);
-          color: #333333;
-          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+          background: #ffffff;
+          border: 0;
+          color: #ee4d2d;
+          box-shadow: none;
           font-weight: 900;
         }
         .st-key-cart-fab-shell .stButton > button p {
@@ -1048,7 +1133,7 @@ def apply_styles() -> None:
           min-width: 22px;
           height: 22px;
           border-radius: 999px;
-          background: #3483fa;
+          background: #ee4d2d;
           color: #ffffff;
           display: grid;
           place-items: center;
@@ -1075,7 +1160,7 @@ def apply_styles() -> None:
           font-weight: 700;
         }
         .cart-dialog-total {
-          background: #fff159;
+          background: #fff0eb;
           border: 1px solid rgba(0, 0, 0, 0.08);
           border-radius: 12px;
           padding: 0.75rem 0.85rem;
@@ -1147,17 +1232,17 @@ def apply_styles() -> None:
           padding: 0 0.8rem;
         }
         [class*="st-key-product-card"] div[data-testid="stVerticalBlockBorderWrapper"] {
-          border-radius: 8px;
-          background: rgba(255, 255, 255, 0.94);
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.13);
+          border-radius: 4px;
+          background: #ffffff;
+          box-shadow: none;
           border-color: rgba(0, 0, 0, 0.06);
         }
         [class*="st-key-product-card"] div[data-testid="stImage"] img {
-          height: 214px !important;
+          height: 205px !important;
           width: 100% !important;
           object-fit: contain !important;
           background: #ffffff;
-          border-radius: 6px;
+          border-radius: 4px;
         }
         [class*="st-key-product-card"] div[data-testid="stImage"] {
           margin-bottom: 0.35rem;
@@ -1174,6 +1259,16 @@ def apply_styles() -> None:
         [class*="st-key-product-card"] div[data-testid="stSelectbox"] {
           margin-top: 0.15rem;
           margin-bottom: 0.45rem;
+        }
+        [class*="st-key-product-row"] div[data-testid="stHorizontalBlock"] {
+          display: grid !important;
+          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          gap: 0.75rem !important;
+        }
+        [class*="st-key-product-row"] div[data-testid="column"] {
+          width: 100% !important;
+          min-width: 0 !important;
+          flex: initial !important;
         }
         .st-key-cart-dialog div[data-testid="stVerticalBlockBorderWrapper"] {
           border-radius: 10px;
@@ -1239,15 +1334,13 @@ def apply_styles() -> None:
             grid-template-columns: 1fr;
           }
           .st-key-cart-fab-shell .stButton {
-            right: 0.85rem;
-            bottom: calc(0.85rem + env(safe-area-inset-bottom));
-            width: 58px !important;
-            height: 58px !important;
+            width: 46px !important;
+            height: 46px !important;
           }
           .st-key-cart-fab-shell .stButton > button {
-            width: 58px !important;
-            height: 58px !important;
-            min-height: 58px;
+            width: 46px !important;
+            height: 46px !important;
+            min-height: 46px;
           }
           .st-key-cart-fab-shell .stButton > button [data-testid="stIconMaterial"] {
             font-size: 1.65rem;
@@ -1257,14 +1350,34 @@ def apply_styles() -> None:
             margin-top: 0.65rem;
           }
           [class*="st-key-product-card"] div[data-testid="stVerticalBlockBorderWrapper"] {
-            border-radius: 8px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.13);
+            border-radius: 4px;
+            box-shadow: none;
           }
           [class*="st-key-product-card"] div[data-testid="stImage"] img {
-            height: 165px !important;
+            height: 158px !important;
           }
           .product-description {
-            min-height: auto;
+            display: none;
+            min-height: 0;
+          }
+          [class*="st-key-product-row"] div[data-testid="stHorizontalBlock"] {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 0.55rem !important;
+          }
+          [class*="st-key-product-card"] .stButton > button {
+            min-height: 2.25rem;
+            padding-left: 0.55rem;
+            padding-right: 0.55rem;
+          }
+          [class*="st-key-product-card"] .stButton > button p {
+            font-size: 0.86rem;
+          }
+          .price-line {
+            font-size: 1.18rem;
+          }
+          .badge {
+            font-size: 0.58rem;
+            padding: 0.14rem 0.38rem;
           }
           div[data-testid="stDialog"] div[role="dialog"] {
             width: min(94vw, 520px) !important;
@@ -1344,6 +1457,7 @@ def sort_products(products: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(
         products,
         key=lambda product: (
+            0 if is_promotional_product(product) else 1,
             0 if product.get("pinned") else 1,
             product.get("featured_rank") if product.get("featured_rank") is not None else 999,
             product.get("name", ""),
@@ -1557,6 +1671,9 @@ def render_product(product: dict[str, Any], suffix: str) -> None:
             st.image(image, width="stretch")
 
         badges = [f'<span class="badge">{product["category"]}</span>']
+        promo_percent = get_promotion_percent(product)
+        if promo_percent is not None:
+            badges.append(f'<span class="badge sale">-{promo_percent}%</span>')
         if product.get("featured"):
             badges.append('<span class="badge hot">Destaque</span>')
         if product.get("customizable"):
@@ -1573,10 +1690,7 @@ def render_product(product: dict[str, Any], suffix: str) -> None:
             f'<div class="product-description">{product["description"]}</div>',
             unsafe_allow_html=True,
         )
-        st.markdown(
-            f'<div class="price-line">{format_product_price(product)}</div>',
-            unsafe_allow_html=True,
-        )
+        st.markdown(render_price_html(product), unsafe_allow_html=True)
 
         color = None
         colors = product.get("colors") or []
@@ -1587,16 +1701,13 @@ def render_product(product: dict[str, Any], suffix: str) -> None:
                 key=f"color-{suffix}-{product['id']}",
             )
 
-        action_cols = st.columns([0.48, 0.52], gap="small")
-        with action_cols[0]:
-            details = st.popover("Ver detalhes", width="stretch")
-        with action_cols[1]:
-            add_pressed = st.button(
-                "Adicionar",
-                key=f"add-{suffix}-{product['id']}",
-                type="primary",
-                width="stretch",
-            )
+        details = st.popover("Ver detalhes", width="stretch")
+        add_pressed = st.button(
+            "Adicionar",
+            key=f"add-{suffix}-{product['id']}",
+            type="primary",
+            width="stretch",
+        )
 
         with details:
             st.write(product.get("description_long") or product.get("description"))
@@ -1623,13 +1734,18 @@ def render_product(product: dict[str, Any], suffix: str) -> None:
 def render_product_grid(products: list[dict[str, Any]], suffix: str) -> None:
     for start in range(0, len(products), 4):
         row = products[start : start + 4]
-        cols = st.columns(4)
-        for col, product in zip(cols, row):
-            with col:
-                render_product(product, suffix)
+        with st.container(key=f"product-row-{suffix}-{start}"):
+            cols = st.columns(4)
+            for col, product in zip(cols, row):
+                with col:
+                    render_product(product, suffix)
 
 
-def render_search_controls(products: list[dict[str, Any]]) -> tuple[str, str]:
+def render_search_controls(
+    products: list[dict[str, Any]],
+    database_url: str | None,
+    phone: str,
+) -> tuple[str, str]:
     categories = ["Todas as categorias"] + sorted({product["category"] for product in products})
     if "catalog_search" not in st.session_state:
         st.session_state.catalog_search = ""
@@ -1638,21 +1754,27 @@ def render_search_controls(products: list[dict[str, Any]]) -> tuple[str, str]:
     if st.session_state.catalog_category not in categories:
         st.session_state.catalog_category = "Todas as categorias"
     with st.container(key="market-search-shell"):
-        search_col, category_col = st.columns([0.72, 0.28], gap="small")
-        with search_col:
+        with st.container(
+            horizontal=True,
+            vertical_alignment="center",
+            gap="small",
+            key="search-cart-row",
+        ):
             search = st.text_input(
                 "Buscar",
                 placeholder="Buscar produtos, peças ou ideias",
                 label_visibility="collapsed",
                 key="catalog_search",
+                width="stretch",
             )
-        with category_col:
-            category = st.selectbox(
-                "Categoria",
-                categories,
-                label_visibility="collapsed",
-                key="catalog_category",
-            )
+            render_cart_fab(products, database_url, phone)
+        category = st.selectbox(
+            "Categoria",
+            categories,
+            label_visibility="collapsed",
+            key="catalog_category",
+            width="stretch",
+        )
     return search, category
 
 
@@ -1754,11 +1876,21 @@ def render_market_tiles() -> None:
 
 def render_catalog(products: list[dict[str, Any]], search: str, category: str) -> None:
     filtered = filter_products(products, search, category)
-    st.markdown('<div class="section-heading">Destaques do catálogo</div>', unsafe_allow_html=True)
     if not filtered:
         st.warning("Nenhum produto encontrado. Ajuste a busca ou o filtro.")
         return
-    render_product_grid(filtered, "catalog")
+
+    promotional_products = [product for product in filtered if is_promotional_product(product)]
+    regular_products = [product for product in filtered if not is_promotional_product(product)]
+
+    if promotional_products:
+        st.markdown('<div class="section-heading">Produtos em promoção</div>', unsafe_allow_html=True)
+        render_product_grid(promotional_products, "promo")
+
+    if regular_products:
+        heading = "Todos os produtos" if promotional_products else "Destaques do catálogo"
+        st.markdown(f'<div class="section-heading">{heading}</div>', unsafe_allow_html=True)
+        render_product_grid(regular_products, "catalog")
 
 
 def render_sidebar(products: list[dict[str, Any]], database_url: str | None, phone: str) -> None:
@@ -2245,6 +2377,8 @@ def product_form_payload(
     category: str,
     price_mode: str,
     price_value: float,
+    compare_price_value: float,
+    clear_promotion: bool,
     price_text: str,
     description: str,
     description_long: str,
@@ -2286,10 +2420,24 @@ def product_form_payload(
         price = None
         final_price_text = price_text.strip() or "A combinar"
 
+    existing_price = to_decimal(existing_product.get("price"))
+    existing_compare_price = to_decimal(existing_product.get("compare_at_price"))
+    manual_compare_price = to_decimal(compare_price_value) if compare_price_value else None
+    compare_at_price = existing_compare_price
+    if clear_promotion or price is None:
+        compare_at_price = None
+    elif manual_compare_price and manual_compare_price > price:
+        compare_at_price = manual_compare_price
+    elif existing_price is not None and price < existing_price:
+        compare_at_price = max(existing_price, existing_compare_price or Decimal("0"))
+    elif compare_at_price is not None and compare_at_price <= price:
+        compare_at_price = None
+
     return {
         "id": product_id.strip().lower(),
         "name": name.strip(),
         "price": price,
+        "compare_at_price": compare_at_price,
         "price_text": final_price_text,
         "description": description.strip(),
         "description_long": (description_long.strip() or description.strip()),
@@ -2353,6 +2501,23 @@ def render_product_admin_form(
             value=float(product.get("price") or 0),
             step=0.5,
             format="%.2f",
+            disabled=price_mode != "Preço fixo",
+        )
+        compare_price_value = st.number_input(
+            "Preço antigo (promoção)",
+            min_value=0.0,
+            value=float(product.get("compare_at_price") or 0),
+            step=0.5,
+            format="%.2f",
+            disabled=price_mode != "Preço fixo",
+            help=(
+                "Quando você baixa o preço de um produto, o app guarda o valor anterior "
+                "aqui e mostra a promoção na loja."
+            ),
+        )
+        clear_promotion = st.checkbox(
+            "Limpar promoção deste produto",
+            value=False,
             disabled=price_mode != "Preço fixo",
         )
         price_text = st.text_input(
@@ -2422,6 +2587,8 @@ def render_product_admin_form(
             category=category,
             price_mode=price_mode,
             price_value=price_value,
+            compare_price_value=compare_price_value,
+            clear_promotion=clear_promotion,
             price_text=price_text,
             description=description,
             description_long=description_long,
@@ -2509,6 +2676,7 @@ def render_admin_panel(database_url: str | None) -> None:
                 "description_long": "",
                 "category": "Suportes",
                 "price": Decimal("0.00"),
+                "compare_at_price": None,
                 "price_text": None,
                 "specs": {"dimensoes": "A confirmar", "tempo": "A confirmar"},
                 "colors": [],
@@ -2550,9 +2718,8 @@ def main() -> None:
     store_tab, admin_tab = st.tabs(["Loja", "Admin"])
 
     with store_tab:
-        search, category = render_search_controls(products)
+        search, category = render_search_controls(products, database_url, phone)
         render_store_banners()
-        render_cart_fab(products, database_url, phone)
         render_catalog(products, search, category)
 
     with admin_tab:
